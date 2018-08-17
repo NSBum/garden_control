@@ -17,16 +17,15 @@
 //	si7021 i2c temp/humidity component
 #include "si7021.h"
 
-#define I2C_SDA	CONFIG_I2C_SDA              //default GPIO_NUM_21
-#define I2C_SCL CONFIG_I2C_SCL	            //	GPIO_NUM_22
+#define I2C_SDA	(CONFIG_I2C_SDA)  //    default GPIO_NUM_21
+#define I2C_SCL (CONFIG_I2C_SCL)  //	default GPIO_NUM_22
 
-#define MESSAGE "Hello TCP Client!!"
+static const char *TAG="sta_mode_tcp_server";
+
 #define LISTENQ 2
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
-
-static const char *TAG="sta_mode_tcp_server";
 
 //	global temp and humidity
 float temp,hum;
@@ -138,7 +137,12 @@ void tcp_server(void *pvParam) {
             ESP_LOGI(TAG, "\nDone reading from socket");
 
             char str[80];
-            sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
+            if( strncmp("RC",r,2) == 0 ) {
+                sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
+            }
+            else {
+                sprintf(str,"Unknown command");
+            }
             if( write(cs , str , strlen(str)) < 0)
             {
                 ESP_LOGE(TAG, "Send failed \n");
@@ -159,7 +163,7 @@ void query_sensor(void *pvParameter) {
     while(1) {
         temp = si7021_read_temperature();
         hum = si7021_read_humidity();
-        
+
         printf("%0.2f degrees C, %0.2f%% RH\n", temp, hum);
         vTaskDelay(5000 / portTICK_RATE_MS);
     }
@@ -176,12 +180,12 @@ void app_main()
     ESP_ERROR_CHECK(ret);
 
     initialise_wifi();
-    
+
     //	initialize I2C driver/device
     ret = si7021_init(I2C_NUM_0, I2C_SDA,I2C_SCL,GPIO_PULLUP_DISABLE,GPIO_PULLUP_DISABLE);
     ESP_ERROR_CHECK(ret);
     printf("I2C driver initialized\n");
-    
+
 
     xTaskCreate(&printWiFiIP,"printWiFiIP",2048,NULL,5,NULL);
     xTaskCreate(&tcp_server,"tcp_server",4096,NULL,5,NULL);
