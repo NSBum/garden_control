@@ -134,6 +134,7 @@ void tcp_server(void *pvParam) {
                     putchar(recv_buf[i]);
                 }
             } while( r > 0 );
+            recv_buf[r] = '\0';
             ESP_LOGI(TAG, "\nDone reading from socket");
 
             char str[80];
