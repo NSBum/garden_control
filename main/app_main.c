@@ -137,7 +137,7 @@ void tcp_server(void *pvParam) {
             ESP_LOGI(TAG, "\nDone reading from socket");
 
             char str[80];
-            if( strncmp("RC",r,2) == 0 ) {
+            if( strncmp("RC",recv_buf,2) == 0 ) {
                 sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
             }
             else {
