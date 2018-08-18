@@ -212,11 +212,11 @@ void tcp_server(void *pvParam) {
                     cmd_status = cmd_status_idle;
                     break;
                 default:
-                    sprintf(str,"Unknown command: %d",memcmp("RC",recv_buf,2));
-                    break;
+                    char *s = create_json_response_error(memcmp("RC",recv_buf,2))
+                    strcpy(str,s);
+                    cmd_status = cmd_status_idle;
             }
-            if( write(cs , str , strlen(str)) < 0)
-            {
+            if( write(cs , str , strlen(str)) < 0) {
                 ESP_LOGE(TAG, "Send failed \n");
                 close(s);
                 vTaskDelay(4000 / portTICK_PERIOD_MS);

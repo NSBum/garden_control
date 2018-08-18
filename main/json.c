@@ -45,7 +45,7 @@ char* create_json_response_th(float temperature, float humidity) {
         goto end;
     }
     cJSON_AddItemToObject(response, "humidity", j_hum);
-    
+
     if( response == NULL ) {
         goto end;
     }
@@ -71,6 +71,22 @@ char* create_json_response_relay(int state, int channel) {
     }
     cJSON_AddItemToObject(response, "status", j_state);
     cJSON_AddItemToObject(response, "channel", j_chan);
+    string = cJSON_Print(response);
+    end:
+        cJSON_Delete(response);
+        return string;
+}
+
+char* create_json_response_error(int err); {
+    char *string = NULL;
+    cJSON *j_err = NULL;
+    cJSON *response = cJSON_CreateObject();
+
+    j_err = cJSON_CreateNumber(err);
+    if( j_err == NULL ) {
+        goto end;
+    }
+    cJSON_AddItemToObject(response, "error", j_err);
     string = cJSON_Print(response);
     end:
         cJSON_Delete(response);
