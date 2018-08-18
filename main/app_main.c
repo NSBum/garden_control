@@ -39,9 +39,8 @@ typedef enum {
     cmd_status_report,
     cmd_status_reportcase,
     cmd_status_relayon,
-    cmd_status_relayon0,
     cmd_status_relayoff,
-    cmd_status_relayoff0
+    cmd_status_relayquery
 } cmd_status_t;
 
 cmd_status_t cmd_status;
@@ -172,6 +171,11 @@ void tcp_server(void *pvParam) {
                         cmd_status = cmd_status_relayoff;
                         break;
                     }
+                    else if( recv_buf[0] == 'Q' ) {
+                        addressed_relay = recv_buf[1] - '0';
+                        cmd_status = cmd_status_relayquery;
+                        break;
+                    }
                 }
 
             }
@@ -181,30 +185,35 @@ void tcp_server(void *pvParam) {
                 //printf("Received: %02d: %02X\n",i,recv_buf[i]);
             }
 
-
             char str[1024];
-            if( cmd_status == cmd_status_reportcase ) {
-                //sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
-                char *s = create_json_response_th(temp,hum);
-                strcpy(str,s);
-                cmd_status = cmd_status_idle;
-            }
-            else if( cmd_status == cmd_status_relayon ) {
-                gpio_set_level(relay_pin[addressed_relay], 1);
-                relay_state[addressed_relay] = true;
-                char *s = create_json_response_relay(relay_state[addressed_relay],0);
-                strcpy(str,s);
-                cmd_status = cmd_status_idle;
-            }
-            else if( cmd_status == cmd_status_relayoff ) {
-                gpio_set_level(relay_pin[addressed_relay], 0);
-                relay_state[addressed_relay] = false;
-                char *s = create_json_response_relay(relay_state[addressed_relay],0);
-                strcpy(str,s);
-                cmd_status = cmd_status_idle;
-            }
-            else {
-                sprintf(str,"Unknown command: %d",memcmp("RC",recv_buf,2));
+            switch(cmd_status) {
+                case cmd_status_reportcase:
+                    char *s = create_json_response_th(temp,hum);
+                    strcpy(str,s);
+                    cmd_status = cmd_status_idle;
+                    break;
+                case cmd_status_relayon:
+                    gpio_set_level(relay_pin[addressed_relay], 1);
+                    relay_state[addressed_relay] = true;
+                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    strcpy(str,s);
+                    cmd_status = cmd_status_idle;
+                    break;
+                case cmd_status_relayoff:
+                    gpio_set_level(relay_pin[addressed_relay], 0);
+                    relay_state[addressed_relay] = false;
+                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    strcpy(str,s);
+                    cmd_status = cmd_status_idle;
+                    break;
+                case cmd_status_relayquery:
+                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    strcpy(str,s);
+                    cmd_status = cmd_status_idle;
+                    break;
+                default:
+                    sprintf(str,"Unknown command: %d",memcmp("RC",recv_buf,2));
+                    break;
             }
             if( write(cs , str , strlen(str)) < 0)
             {
