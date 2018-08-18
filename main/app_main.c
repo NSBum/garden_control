@@ -25,6 +25,7 @@
 static const char *TAG="sta_mode_tcp_server";
 
 #define LISTENQ 2
+#define MAX_RELAY 4
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
@@ -43,6 +44,9 @@ typedef enum {
 } cmd_status_t;
 
 cmd_status_t cmd_status;
+uint8_t addressed_relay;
+int relay_state[MAX_RELAY];
+gpio_num_t relay_pin[MAX_RELAY];
 
 int relay_status;
 
@@ -139,10 +143,6 @@ void tcp_server(void *pvParam) {
         while( 1 ) {
             cs = accept(s,(struct sockaddr *)&remote_addr, &socklen);
             ESP_LOGI(TAG,"New connection request,Request data:");
-            //set O_NONBLOCK so that recv will return, otherwise we need to impliment message end
-            //detection logic. If know the client message format you should instead impliment logic
-            //detect the end of message
-            //fcntl(cs,F_SETFL,O_NONBLOCK);
             bzero(recv_buf, sizeof(recv_buf));
             int sizeUsed = 0;
             while( 1 ) {
@@ -161,23 +161,25 @@ void tcp_server(void *pvParam) {
                         cmd_status = cmd_status_reportcase;
                         break;
                     }
-                    else if( recv_buf[0] == 'N' && recv_buf[1] == '0') {
-                        cmd_status = cmd_status_relayon0;
+                    else if( recv_buf[0] == 'N' ) {
+                        addressed_relay = atoi(recv_buf[1]);
+                        cmd_status = cmd_status_relayon;
                         break;
                     }
                     else if( recv_buf[0] == 'F' && recv_buf[1] == '0') {
-                        cmd_status = cmd_status_relayoff0;
+                        addressed_relay = atoi(recv_buf[1]);
+                        cmd_status = cmd_status_relayoff;
                         break;
                     }
                 }
-                
+
             }
             ESP_LOGI(TAG, "\nDone reading from socket");
             for( int i = 0; i < sizeUsed; i++ ) {
                 putchar(recv_buf[i]);
                 //printf("Received: %02d: %02X\n",i,recv_buf[i]);
             }
-            
+
 
             char str[1024];
             if( cmd_status == cmd_status_reportcase ) {
@@ -186,17 +188,17 @@ void tcp_server(void *pvParam) {
                 strcpy(str,s);
                 cmd_status = cmd_status_idle;
             }
-            else if( cmd_status == cmd_status_relayon0 ) {
-                gpio_set_level(RELAY_CONTROL, 1);
-                relay_status = true;
-                char *s = create_json_response_relay(relay_status,0);
+            else if( cmd_status == cmd_status_relayon ) {
+                gpio_set_level(relay_pin[addressed_relay], 1);
+                relay_state[addressed_relay] = true;
+                char *s = create_json_response_relay(relay_state[addressed_relay],0);
                 strcpy(str,s);
                 cmd_status = cmd_status_idle;
             }
             else if( cmd_status == cmd_status_relayoff0 ) {
-                gpio_set_level(RELAY_CONTROL, 0);
-                relay_status = false;
-                char *s = create_json_response_relay(relay_status,0);
+                gpio_set_level(relay_pin[addressed_relay], 0);
+                relay_state[addressed_relay] = false;
+                char *s = create_json_response_relay(relay_state[addressed_relay],0);
                 strcpy(str,s);
                 cmd_status = cmd_status_idle;
             }
@@ -247,12 +249,19 @@ void app_main()
     printf("I2C driver initialized\n");
 
     cmd_status = cmd_status_idle;
-    
-     // 
-    gpio_set_direction(RELAY_CONTROL, GPIO_MODE_OUTPUT);
-    gpio_set_level(RELAY_CONTROL,0);
-    ESP_LOGV(TAG,"Relay off at start");
-    relay_status = false;
+
+    relay_pin[0] = CONFIG_RELAY_0_CONTROL;
+    relay_pin[1] = CONFIG_RELAY_1_CONTROL;
+    relay_pin[2] = CONFIG_RELAY_2_CONTROL;
+    relay_pin[3] = CONFIG_RELAY_3_CONTROL;
+    relay_pin[4] = CONFIG_RELAY_4_CONTROL;
+
+    for(uint8_t i = 0; i <= MAX_RELAY; i++ ) {
+        gpio_set_direction(relay_pin[i], GPIO_MODE_OUTPUT);
+        gpio_set_level(relay_pin[i], 0 );
+        relay_state[i] = false;
+    }
+    ESP_LOGV(TAG,"Relays off at start");
 
     xTaskCreate(&printWiFiIP,"printWiFiIP",2048,NULL,5,NULL);
     xTaskCreate(&tcp_server,"tcp_server",4096,NULL,5,NULL);

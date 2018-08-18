@@ -12,12 +12,56 @@ config ESP_WIFI_PASSWORD
     help
 	WiFi password (WPA or WPA2) for the example to use.
 
-config RELAY_CONTROL
+config RELAY_0_CONTROL
     int "GPIO for relay control"
     range 0 34
     default 4
     help
         GPIO number for the relay control. The default is GPIO_NUM_4
+
+        Note that some GPIO pins have dedicated purposes and cannot be used.
+
+        GPIOs 35-39 are input-only and cannot be used for relay control.
+
+config RELAY_1_CONTROL
+    int "GPIO for relay 1 control"
+    range 0 34
+    default 5
+    help
+        GPIO number for the relay 1 control. The default is GPIO_NUM_5
+
+        Note that some GPIO pins have dedicated purposes and cannot be used.
+
+        GPIOs 35-39 are input-only and cannot be used for relay control.
+
+config RELAY_2_CONTROL
+    int "GPIO for relay 2 control"
+    range 0 34
+    default 12
+    help
+        GPIO number for the relay 1 control. The default is GPIO_NUM_12
+
+        Note that some GPIO pins have dedicated purposes and cannot be used.
+
+        GPIOs 35-39 are input-only and cannot be used for relay control.
+
+config RELAY_3_CONTROL
+    int "GPIO for relay 3 control"
+    range 0 34
+    default 13
+    help
+        GPIO number for the relay 1 control. The default is GPIO_NUM_13
+
+        Note that some GPIO pins have dedicated purposes and cannot be used.
+
+        GPIOs 35-39 are input-only and cannot be used for relay control.
+
+config RELAY_4_CONTROL
+    int "GPIO for relay 4 control"
+    range 0 34
+    default 14
+    help
+        GPIO number for the relay 1 control. The default is GPIO_NUM_14
 
         Note that some GPIO pins have dedicated purposes and cannot be used.
 
