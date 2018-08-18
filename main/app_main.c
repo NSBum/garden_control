@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/fcntl.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -25,7 +26,7 @@
 static const char *TAG="sta_mode_tcp_server";
 
 #define LISTENQ 2
-#define MAX_RELAY 4
+#define MAX_RELAY 5
 
 static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
@@ -45,8 +46,8 @@ typedef enum {
 
 cmd_status_t cmd_status;
 uint8_t addressed_relay;
-int relay_state[MAX_RELAY];
-gpio_num_t relay_pin[MAX_RELAY];
+int relay_state[6];
+gpio_num_t relay_pin[6];
 
 int relay_status;
 
@@ -162,12 +163,12 @@ void tcp_server(void *pvParam) {
                         break;
                     }
                     else if( recv_buf[0] == 'N' ) {
-                        addressed_relay = atoi(recv_buf[1]);
+                        addressed_relay = recv_buf[1] - '0';
                         cmd_status = cmd_status_relayon;
                         break;
                     }
-                    else if( recv_buf[0] == 'F' && recv_buf[1] == '0') {
-                        addressed_relay = atoi(recv_buf[1]);
+                    else if( recv_buf[0] == 'F') {
+                        addressed_relay = recv_buf[1] - '0';
                         cmd_status = cmd_status_relayoff;
                         break;
                     }
@@ -195,7 +196,7 @@ void tcp_server(void *pvParam) {
                 strcpy(str,s);
                 cmd_status = cmd_status_idle;
             }
-            else if( cmd_status == cmd_status_relayoff0 ) {
+            else if( cmd_status == cmd_status_relayoff ) {
                 gpio_set_level(relay_pin[addressed_relay], 0);
                 relay_state[addressed_relay] = false;
                 char *s = create_json_response_relay(relay_state[addressed_relay],0);
@@ -256,7 +257,7 @@ void app_main()
     relay_pin[3] = CONFIG_RELAY_3_CONTROL;
     relay_pin[4] = CONFIG_RELAY_4_CONTROL;
 
-    for(uint8_t i = 0; i <= MAX_RELAY; i++ ) {
+    for( uint8_t i = 0; i < 5; i++ ) {
         gpio_set_direction(relay_pin[i], GPIO_MODE_OUTPUT);
         gpio_set_level(relay_pin[i], 0 );
         relay_state[i] = false;
