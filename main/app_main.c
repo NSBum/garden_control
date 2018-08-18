@@ -19,9 +19,18 @@
 #include "si7021.h"
 #include "json.h"
 
+#include "owb.h"
+#include "owb_rmt.h"
+#include "ds18b20.h"
+
 #define I2C_SDA	(CONFIG_I2C_SDA)  //    default GPIO_NUM_21
 #define I2C_SCL (CONFIG_I2C_SCL)  //	default GPIO_NUM_22
 #define RELAY_CONTROL (CONFIG_RELAY_CONTROL)
+
+#define GPIO_DS18B20_0       (CONFIG_ONE_WIRE_GPIO)
+#define MAX_DEVICES          (8)
+#define DS18B20_RESOLUTION   (DS18B20_RESOLUTION_12_BIT)
+#define SAMPLE_PERIOD        (1000)   // milliseconds
 
 static const char *TAG="sta_mode_tcp_server";
 
