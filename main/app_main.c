@@ -16,9 +16,11 @@
 #include "nvs_flash.h"
 //	si7021 i2c temp/humidity component
 #include "si7021.h"
+#include "json.h"
 
 #define I2C_SDA	(CONFIG_I2C_SDA)  //    default GPIO_NUM_21
 #define I2C_SCL (CONFIG_I2C_SCL)  //	default GPIO_NUM_22
+#define RELAY_CONTROL (CONFIG_RELAY_CONTROL)
 
 static const char *TAG="sta_mode_tcp_server";
 
@@ -29,6 +31,20 @@ const int CONNECTED_BIT = BIT0;
 
 //	global temp and humidity
 float temp,hum;
+
+typedef enum {
+    cmd_status_idle,
+    cmd_status_report,
+    cmd_status_reportcase,
+    cmd_status_relayon,
+    cmd_status_relayon0,
+    cmd_status_relayoff,
+    cmd_status_relayoff0
+} cmd_status_t;
+
+cmd_status_t cmd_status;
+
+int relay_status;
 
 //    event handler for wifi task
 static esp_err_t event_handler(void *ctx, system_event_t *event) {
@@ -90,7 +106,7 @@ void tcp_server(void *pvParam) {
     tcpServerAddr.sin_family = AF_INET;
     tcpServerAddr.sin_port = htons( 3000 );
 
-    int s, r;
+    int s;
     char recv_buf[64];
     static struct sockaddr_in remote_addr;
     static unsigned int socklen;
@@ -126,23 +142,66 @@ void tcp_server(void *pvParam) {
             //set O_NONBLOCK so that recv will return, otherwise we need to impliment message end
             //detection logic. If know the client message format you should instead impliment logic
             //detect the end of message
-            fcntl(cs,F_SETFL,O_NONBLOCK);
-            do {
-                bzero(recv_buf, sizeof(recv_buf));
-                r = recv(cs, recv_buf, sizeof(recv_buf)-1,0);
-                for(int i = 0; i < r; i++) {
-                    putchar(recv_buf[i]);
+            //fcntl(cs,F_SETFL,O_NONBLOCK);
+            bzero(recv_buf, sizeof(recv_buf));
+            int sizeUsed = 0;
+            while( 1 ) {
+                ssize_t sizeRead = recv(cs, recv_buf + sizeUsed, sizeof(recv_buf)-sizeUsed, 0);
+                if( sizeRead < 0 ) {
+                    ESP_LOGE(TAG, "recv: %d %s", sizeRead, strerror(errno));
+                    break;
                 }
-            } while( r > 0 );
-            recv_buf[r] = '\0';
+                if( sizeRead == 0 ) {
+                    break;
+                }
+                sizeUsed += sizeRead;
+                if( sizeUsed >= 2 ) {
+                    ESP_LOGI(TAG,"Two byte message received\n");
+                    if( recv_buf[0] == 'R' && recv_buf[1] == 'C' ) {
+                        cmd_status = cmd_status_reportcase;
+                        break;
+                    }
+                    else if( recv_buf[0] == 'N' && recv_buf[1] == '0') {
+                        cmd_status = cmd_status_relayon0;
+                        break;
+                    }
+                    else if( recv_buf[0] == 'F' && recv_buf[1] == '0') {
+                        cmd_status = cmd_status_relayoff0;
+                        break;
+                    }
+                }
+                
+            }
             ESP_LOGI(TAG, "\nDone reading from socket");
+            for( int i = 0; i < sizeUsed; i++ ) {
+                putchar(recv_buf[i]);
+                //printf("Received: %02d: %02X\n",i,recv_buf[i]);
+            }
+            
 
-            char str[80];
-            if( strncmp("RC",recv_buf,2) == 0 ) {
-                sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
+            char str[1024];
+            if( cmd_status == cmd_status_reportcase ) {
+                //sprintf(str,"T0:%0.1f,H0:%0.1f",temp,hum);
+                char *s = create_json_response_th(temp,hum);
+                strcpy(str,s);
+                cmd_status = cmd_status_idle;
+            }
+            else if( cmd_status == cmd_status_relayon0 ) {
+                gpio_set_level(RELAY_CONTROL, 1);
+                relay_status = true;
+                char *s = create_json_response_relay(relay_status,0);
+                strcpy(str,s);
+                cmd_status = cmd_status_idle;
+            }
+            else if( cmd_status == cmd_status_relayoff0 ) {
+                gpio_set_level(RELAY_CONTROL, 0);
+                relay_status = false;
+                char *s = create_json_response_relay(relay_status,0);
+                strcpy(str,s);
+                cmd_status = cmd_status_idle;
             }
             else {
-                sprintf(str,"Unknown command");
+                sprintf(str,"Unknown command: %d",memcmp("RC",recv_buf,2));
             }
             if( write(cs , str , strlen(str)) < 0)
             {
@@ -187,6 +246,13 @@ void app_main()
     ESP_ERROR_CHECK(ret);
     printf("I2C driver initialized\n");
 
+    cmd_status = cmd_status_idle;
+    
+     // 
+    gpio_set_direction(RELAY_CONTROL, GPIO_MODE_OUTPUT);
+    gpio_set_level(RELAY_CONTROL,0);
+    ESP_LOGV(TAG,"Relay off at start");
+    relay_status = false;
 
     xTaskCreate(&printWiFiIP,"printWiFiIP",2048,NULL,5,NULL);
     xTaskCreate(&tcp_server,"tcp_server",4096,NULL,5,NULL);
