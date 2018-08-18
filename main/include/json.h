@@ -54,10 +54,9 @@ extern "C" {
  *  the outside temperature.
  *  @param temperature the inside temperature
  *  @param humidity the inside humidity
- *  @param outside the outside temperature measurement.
  *  @returns string of JSON
 */
-char* create_json_response_th(float temperature, float humidity, float outside);
+char* create_json_response_th(float temperature, float humidity);
 
 /**
  *  @brief Returns JSON representation of the relay state
@@ -67,6 +66,6 @@ char* create_json_response_th(float temperature, float humidity, float outside);
  *  @param state 0 if the fountain is off or 1 if the fountain is on
  *  @returns string of JSON
 */
-char* create_json_response_relay(int state);
+char* create_json_response_relay(int state, int channel);
 
 #endif

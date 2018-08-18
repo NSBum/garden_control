@@ -28,11 +28,10 @@
 #include "cJSON.h"
 #include "json.h"
 
-char* create_json_response_th(float temperature, float humidity, float outside) {
+char* create_json_response_th(float temperature, float humidity) {
     char *string = NULL;
     cJSON *j_temp = NULL;
     cJSON *j_hum = NULL;
-    cJSON *j_outside = NULL;
     cJSON *response = cJSON_CreateObject();
 
     j_temp = cJSON_CreateNumber(temperature);
@@ -46,12 +45,6 @@ char* create_json_response_th(float temperature, float humidity, float outside) 
         goto end;
     }
     cJSON_AddItemToObject(response, "humidity", j_hum);
-
-    j_outside = cJSON_CreateNumber(outside);
-    if( j_outside == NULL ) {
-        goto end;
-    }
-    cJSON_AddItemToObject(response, "outside_temperature", j_outside);
     
     if( response == NULL ) {
         goto end;
@@ -62,16 +55,22 @@ char* create_json_response_th(float temperature, float humidity, float outside) 
         return string;
 }
 
-char* create_json_response_relay(int state) {
+char* create_json_response_relay(int state, int channel) {
     char *string = NULL;
     cJSON *j_state = NULL;
+    cJSON *j_chan = NULL;
     cJSON *response = cJSON_CreateObject();
 
     j_state = cJSON_CreateBool(state);
     if( j_state == NULL ) {
         goto end;
     }
+    j_chan = cJSON_CreateNumber(channel);
+    if( j_chan == NULL ) {
+        goto end;
+    }
     cJSON_AddItemToObject(response, "status", j_state);
+    cJSON_AddItemToObject(response, "channel", j_chan);
     string = cJSON_Print(response);
     end:
         cJSON_Delete(response);
