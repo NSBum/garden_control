@@ -41,7 +41,7 @@ static EventGroupHandle_t wifi_event_group;
 const int CONNECTED_BIT = BIT0;
 
 //	global temp and humidity
-float temp,hum;
+float temp,hum, outside_temp;
 
 typedef enum {
     cmd_status_idle,
@@ -282,7 +282,12 @@ void app_main()
     }
     ESP_LOGV(TAG,"Relays off at start");
 
+    // Allow bus to stabilize a bit before communicating
+    vTaskDelay(2000.0 / portTICK_PERIOD_MS);
+
+    xTaskCreate(&owb_search_task,"owbsearch",4096,NULL,5,NULL);
     xTaskCreate(&printWiFiIP,"printWiFiIP",2048,NULL,5,NULL);
     xTaskCreate(&tcp_server,"tcp_server",4096,NULL,5,NULL);
     xTaskCreate(&query_sensor, "sensor_task", 2048, NULL, 5,NULL);
+    xTaskCreate(&owb_get_temps,"gettemp",4096,&outside_temp,5,NULL);
 }
