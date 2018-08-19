@@ -199,33 +199,34 @@ void tcp_server(void *pvParam) {
             }
 
             char str[1024];
+            char *s;
             switch(cmd_status) {
                 case cmd_status_reportcase:
-                    char *s = create_json_response_th(temp,hum);
+                    s = create_json_response_th(temp,hum);
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
                     break;
                 case cmd_status_relayon:
                     gpio_set_level(relay_pin[addressed_relay], 1);
                     relay_state[addressed_relay] = true;
-                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    s = create_json_response_relay(relay_state[addressed_relay],0);
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
                     break;
                 case cmd_status_relayoff:
                     gpio_set_level(relay_pin[addressed_relay], 0);
                     relay_state[addressed_relay] = false;
-                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    s = create_json_response_relay(relay_state[addressed_relay],0);
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
                     break;
                 case cmd_status_relayquery:
-                    char *s = create_json_response_relay(relay_state[addressed_relay],0);
+                    s = create_json_response_relay(relay_state[addressed_relay],0);
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
                     break;
                 default:
-                    char *s = create_json_response_error(memcmp("RC",recv_buf,2))
+                    s = create_json_response_error(memcmp("RC",recv_buf,2))
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
             }
