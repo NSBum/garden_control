@@ -18,6 +18,7 @@
 //	si7021 i2c temp/humidity component
 #include "si7021.h"
 #include "json.h"
+#include "outside.h"
 
 #include "owb.h"
 #include "owb_rmt.h"
