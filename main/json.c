@@ -77,7 +77,7 @@ char* create_json_response_relay(int state, int channel) {
         return string;
 }
 
-char* create_json_response_error(int err); {
+char* create_json_response_error(int err) {
     char *string = NULL;
     cJSON *j_err = NULL;
     cJSON *response = cJSON_CreateObject();
