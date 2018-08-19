@@ -1,10 +1,10 @@
 /************************************************************************************
 *   Copyright (c) 2018 by Alan Duncan                                               *
 *                                                                                   *
-*   This file is part of fountain_control                                           *
+*   This file is part of garden_control                                             *
 *                                                                                   *
-*   fountain_control is an ESP32-based system for local and                         *
-*   web-based control of pond fountains on our rural residential                    *
+*   garden_control is an ESP32-based system for local and                           *
+*   web-based control of irrigation control on our rural residential                *
 *   property.                                                                       *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy    *
 *   of this software and associated documentation files (the "Software"), to deal   *
@@ -32,7 +32,7 @@
  *  @brief Header file for the outside temperature measurement for fountain_control.
  *
  *  The outside temperature measurement subsystem is an add-on feature for the
- *  fountain_control project giving weather station functionality.
+ *  garden_control project giving weather station functionality.
  */
 
 #ifndef OUTSIDE_H
@@ -56,7 +56,7 @@ extern "C" {
  *  @brief Searches for OneWire devices.
  *
  *  A FreeRTOS task launched at startup that searches for OneWire devices on the
- *  designated OneWire bus. On completion of the search, this function sets the 
+ *  designated OneWire bus. On completion of the search, this function sets the
  *  `SEARCH_COMPLETE_BIT` of the `owb_event_group` flags.
  *  @param pvParameters unused
  *  @return none

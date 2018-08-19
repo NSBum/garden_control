@@ -1,10 +1,10 @@
 /************************************************************************************
 *   Copyright (c) 2018 by Alan Duncan                                               *
 *                                                                                   *
-*   This file is part of fountain_control                                           *
+*   This file is part of garden_control                                             *
 *                                                                                   *
-*   fountain_control is an ESP32-based system for local and                         *
-*   web-based control of pond fountains on our rural residential                    *
+*   garden_control is an ESP32-based system for local and                           *
+*   web-based control of irrigation on our rural residential                        *
 *   property.                                                                       *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy    *
 *   of this software and associated documentation files (the "Software"), to deal   *
@@ -70,7 +70,7 @@ void owb_search_task(void *pvParameters ) {
 
     // Find all connected devices
     ESP_LOGI(MAINTAG,"Finding devices");
-    
+
     OneWireBus_SearchState search_state = {0};
     bool found = false;
     owb_search_first(owb, &search_state, &found);
