@@ -232,7 +232,7 @@ void tcp_server(void *pvParam) {
             }
             if( write(cs , str , strlen(str)) < 0) {
                 ESP_LOGE(TAG, "Send failed \n");
-                close(s);
+                close(cs);
                 vTaskDelay(4000 / portTICK_PERIOD_MS);
                 continue;
             }
