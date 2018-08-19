@@ -49,7 +49,7 @@ extern "C" {
 
 /**
  *  @brief Returns JSON representation of temperature, humidity and outside temperature
- *  
+ *
  *  Returns a string of JSON reporting the inside temperature and humidity along with
  *  the outside temperature.
  *  @param temperature the inside temperature
@@ -60,12 +60,21 @@ char* create_json_response_th(float temperature, float humidity);
 
 /**
  *  @brief Returns JSON representation of the relay state
- *  
+ *
  *  Returns a string of JSON reporting the state of the fountain relay.
  *
  *  @param state 0 if the fountain is off or 1 if the fountain is on
  *  @returns string of JSON
 */
 char* create_json_response_relay(int state, int channel);
+
+/**
+ * @brief Returns JSON representation of error
+ *
+ * Returns a string of JSON reporting an API error
+ * @param errornum The error number reported by the application
+ * @returns string of JSON
+ */
+ char* create_json_response_error(int err);
 
 #endif
