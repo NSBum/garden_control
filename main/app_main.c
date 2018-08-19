@@ -43,6 +43,7 @@ const int CONNECTED_BIT = BIT0;
 //	global temp and humidity
 float temp,hum, outside_temp;
 
+//  State for commands incoming over TCP connection
 typedef enum {
     cmd_status_idle,
     cmd_status_report,
@@ -53,11 +54,13 @@ typedef enum {
 } cmd_status_t;
 
 cmd_status_t cmd_status;
-uint8_t addressed_relay;
-int relay_state[6];
-gpio_num_t relay_pin[6];
 
-int relay_status;
+//  index of relay addressed by an incoming TCP command
+uint8_t addressed_relay;
+//  state of nth relay
+int relay_state[6];
+//  GPIO numbers for connections to individual relays
+gpio_num_t relay_pin[6];
 
 //    event handler for wifi task
 static esp_err_t event_handler(void *ctx, system_event_t *event) {
