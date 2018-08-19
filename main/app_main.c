@@ -226,7 +226,7 @@ void tcp_server(void *pvParam) {
                     cmd_status = cmd_status_idle;
                     break;
                 default:
-                    s = create_json_response_error(memcmp("RC",recv_buf,2))
+                    s = create_json_response_error(memcmp("RC",recv_buf,2));
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
             }
