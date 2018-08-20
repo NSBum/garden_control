@@ -114,7 +114,7 @@ config TM1637_1_DIO
 config ONE_WIRE_GPIO
     int "OneWire GPIO number"
     range 0 34
-    default 15
+    default 18
     help
         GPIO number (IOxx) to access One Wire Bus.
 
