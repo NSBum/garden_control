@@ -19,3 +19,6 @@
 [submodule "components/esp32-ds3231"]
 	path = components/esp32-ds3231
 	url = https://NSBum@github.com/NSBum/esp32-ds3231.git
+[submodule "components/esp32-ds18x20"]
+	path = components/esp32-ds18x20
+	url = https://NSBum@github.com/NSBum/esp32-ds18x20.git
