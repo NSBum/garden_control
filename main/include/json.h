@@ -58,6 +58,8 @@ extern "C" {
 */
 char* create_json_response_th(float temperature, float humidity);
 
+char* create_json_response_ot(float temperature);
+
 /**
  *  @brief Returns JSON representation of the relay state
  *
