@@ -50,7 +50,7 @@ extern "C" {
 #define MAX_DEVICES                 (8)
 #define DS18B20_RESOLUTION          (DS18B20_RESOLUTION_12_BIT)
 #define SAMPLE_PERIOD               (1000)   // milliseconds betwen temperature measurements
-#define GPIO_DS18B20_0              18//(CONFIG_ONE_WIRE_GPIO)      //  set in configuration menu
+#define GPIO_DS18B20_0              (CONFIG_ONE_WIRE_GPIO)      //  set in configuration menu
 
 /**
  *  @brief Searches for OneWire devices.

@@ -28,11 +28,6 @@
 #define I2C_SCL (CONFIG_I2C_SCL)  //	default GPIO_NUM_22
 #define RELAY_CONTROL (CONFIG_RELAY_CONTROL)
 
-#define GPIO_DS18B20_0       18//(CONFIG_ONE_WIRE_GPIO)
-#define MAX_DEVICES          (8)
-#define DS18B20_RESOLUTION   (DS18B20_RESOLUTION_12_BIT)
-#define SAMPLE_PERIOD        (1000)   // milliseconds
-
 static const char *TAG="sta_mode_tcp_server";
 
 #define LISTENQ 2
@@ -49,6 +44,7 @@ typedef enum {
     cmd_status_idle,
     cmd_status_report,
     cmd_status_reportcase,
+    cmd_status_reportoutside,
     cmd_status_relayon,
     cmd_status_relayoff,
     cmd_status_relayquery
@@ -174,6 +170,10 @@ void tcp_server(void *pvParam) {
                         cmd_status = cmd_status_reportcase;
                         break;
                     }
+                    else if( recv_buf[0] == 'R' && recv_buf[1] == 'O' ) {
+                    	cmd_status = cmd_status_reportoutside;
+                    	break;
+                    }
                     else if( recv_buf[0] == 'N' ) {
                         addressed_relay = recv_buf[1] - '0';
                         cmd_status = cmd_status_relayon;
@@ -206,6 +206,11 @@ void tcp_server(void *pvParam) {
                     strcpy(str,s);
                     cmd_status = cmd_status_idle;
                     break;
+                case cmd_status_reportoutside:
+                	s = create_json_response_ot(outside_temp);
+                	strcpy(str,s);
+                    cmd_status = cmd_status_idle;
+                	break;
                 case cmd_status_relayon:
                     gpio_set_level(relay_pin[addressed_relay], 1);
                     relay_state[addressed_relay] = true;
