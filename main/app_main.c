@@ -18,15 +18,20 @@
 //	si7021 i2c temp/humidity component
 #include "si7021.h"
 #include "json.h"
-#include "outside.h"
-
-#include "owb.h"
-#include "owb_rmt.h"
-#include "ds18b20.h"
+#include "ds18x20.h"
 
 #define I2C_SDA	(CONFIG_I2C_SDA)  //    default GPIO_NUM_21
 #define I2C_SCL (CONFIG_I2C_SCL)  //	default GPIO_NUM_22
 #define RELAY_CONTROL (CONFIG_RELAY_CONTROL)
+
+static const gpio_num_t SENSOR_GPIO = (CONFIG_ONE_WIRE_GPIO)
+static const uint32_t LOOP_DELAY_MS = 4250;
+static const int MAX_SENSORS = 2;
+static const int RESCAN_INTERVAL = 8;
+
+ds18x20_addr_t addrs[MAX_SENSORS];
+float temps[MAX_SENSORS];
+int sensor_count;
 
 static const char *TAG="sta_mode_tcp_server";
 
@@ -207,7 +212,7 @@ void tcp_server(void *pvParam) {
                     cmd_status = cmd_status_idle;
                     break;
                 case cmd_status_reportoutside:
-                	s = create_json_response_ot(outside_temp);
+                	s = create_json_response_ot(temps[0]);
                 	strcpy(str,s);
                     cmd_status = cmd_status_idle;
                 	break;
@@ -260,6 +265,34 @@ void query_sensor(void *pvParameter) {
     }
 }
 
+void ds18x20_read(void *pvParameter) {
+    while( 1 ) {
+        //  periodically rescan the bus to determine whether
+        //  additional devices have connected
+        sensor_count = ds18x20_scan_devices(SENSOR_GPIO, addrs, MAX_SENSORS);
+        if( sensor_count < 1 ) {
+            ESP_LOGE("No DS18X20 sensors detected");
+        }
+        else {
+            ESP_LOGI("%d sensors detected:\n",sensor_count);
+            sensor_count = (sensor_count > MAX_SENSORS)?MAX_SENSORS:sensor_count;
+            //  sample the sensor(s)
+            for(uint8_t i = 0; i < RESCAN_INTERVAL; i++ ) {
+                ds18x20_measure_and_read_multi(SENSOR_GPIO, addrs, sensor_count, temps);
+                for(uint8_t j = 0; j < sensor_count; j++ ) {
+                    //  print the sensor address
+                    uint32_t addr0 = addrs[j] >> 32;
+                    uint32_t addr1 = addrs[j];
+                    float temp_c = temps[j];
+                    float temp_f = (temp_c * 1.8) + 32;
+                    ESP_LOGI("  Sensor %08x%08x reports %f deg C (%f deg F)", addr0, addr1, temp_c, temp_f);
+                    vTaskDelay(LOOP_DELAY_MS / portTICK_PERIOD_MS);
+                }
+            }
+        }
+    }
+}
+
 void app_main()
 {
     //Initialize NVS
@@ -295,9 +328,10 @@ void app_main()
     // Allow bus to stabilize a bit before communicating
     vTaskDelay(2000.0 / portTICK_PERIOD_MS);
 
-    xTaskCreate(&owb_search_task,"owbsearch",4096,NULL,5,NULL);
+    //xTaskCreate(&owb_search_task,"owbsearch",4096,NULL,5,NULL);
     xTaskCreate(&printWiFiIP,"printWiFiIP",2048,NULL,5,NULL);
     xTaskCreate(&tcp_server,"tcp_server",4096,NULL,5,NULL);
     xTaskCreate(&query_sensor, "sensor_task", 2048, NULL, 5,NULL);
-    xTaskCreate(&owb_get_temps,"gettemp",4096,&outside_temp,5,NULL);
+    //xTaskCreate(&owb_get_temps,"gettemp",4096,&outside_temp,5,NULL);
+    xTaskCreate(&ds18x20_read,"ds18b20_read", configMINIMAL_STACK_SIZE * 4, NULL, 5, NULL);
 }
